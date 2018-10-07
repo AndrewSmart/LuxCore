@@ -26,8 +26,8 @@
 #############################################################################
 #############################################################################
 
-set(LUXRAYS_VERSION_MAJOR 2)
-set(LUXRAYS_VERSION_MINOR 1alpha4)
+set(LUXRAYS_VERSION_MAJOR "${LuxCoreRender_VERSION_MAJOR}")
+set(LUXRAYS_VERSION_MINOR "${LuxCoreRender_VERSION_MINOR}")
 
 # Configure a header file to pass some of the CMake settings
 # to the source code:
@@ -251,7 +251,7 @@ add_library(luxrays STATIC ${LUXRAYS_LIB_SRCS})
 add_definitions(-DCPP_API_EXPORTS ${VISIBILITY_FLAGS}) # for controlling visibility
 
 TARGET_LINK_LIBRARIES(luxrays ${OPENIMAGEIO_LIBRARIES})
-TARGET_LINK_LIBRARIES(luxrays ${Boost_LIBRARIES})
+TARGET_LINK_LIBRARIES(luxrays ${Boost_LIBRARIES} ${PYTHON_LIBRARIES})
 if (WIN32)
 # This is needed by Boost 1.67 but is not found automatically
     TARGET_LINK_LIBRARIES(luxrays bcrypt.lib)

@@ -32,6 +32,8 @@ find_package(OpenImageIO REQUIRED)
 include_directories(BEFORE SYSTEM ${OPENIMAGEIO_INCLUDE_DIR})
 find_package(OpenEXR REQUIRED)
 
+set(PYTHONLIBS_Find_Version "3.5" CACHE STRING "Version of PythonLibs to find, see FindPythonLibs.cmake")
+mark_as_advanced(PYTHONLIBS_Find_Version)
 if(NOT APPLE)
     # Apple has these available hardcoded and matched in macos repo, see Config_OSX.cmake
 
@@ -43,7 +45,7 @@ if(NOT APPLE)
     find_package(PNG REQUIRED)
     include_directories(BEFORE SYSTEM ${PNG_PNG_INCLUDE_DIR})
 	# Find Python Libraries
-	find_package(PythonLibs 3.4)
+	find_package(PythonLibs ${PYTHONLIBS_Find_Version})
 endif()
 
 find_program(PYSIDE_UIC NAME pyside-uic
@@ -63,7 +65,11 @@ set(Boost_MINIMUM_VERSION       "1.56.0")
 
 # For Windows builds, PYTHON_V must be defined as "3x" (x=Python minor version, e.g. "35")
 # For other platforms, specifying python minor version is not needed
-set(LUXRAYS_BOOST_COMPONENTS thread program_options filesystem serialization iostreams regex system python${PYTHON_V} chrono serialization numpy${PYTHON_V})
+if (NOT WIN32)
+	set(PYTHON_V "3") #Fixes Issues #139
+endif()
+
+set(LUXRAYS_BOOST_COMPONENTS thread program_options filesystem serialization iostreams regex system python${PYTHON_V} chrono numpy${PYTHON_V})
 find_package(Boost ${Boost_MINIMUM_VERSION} COMPONENTS ${LUXRAYS_BOOST_COMPONENTS})
 if (NOT Boost_FOUND)
         # Try again with the other type of libs
@@ -85,6 +91,7 @@ if (Boost_FOUND)
 		ADD_DEFINITIONS(-DBOOST_STATIC_LIB)
 		ADD_DEFINITIONS(-DBOOST_PYTHON_STATIC_LIB)
 	endif()
+	mark_as_advanced(BOOST_THREAD_LIBRARY)
 endif ()
 
 

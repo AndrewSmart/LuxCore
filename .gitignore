@@ -35,6 +35,10 @@ build
 compile_commands.json
 dist
 samples/pyluxcoretool/__pycache__
+src/pyluxcoretools/pyluxcoretools/pyluxcoremenu/menuwindow.py
+src/pyluxcoretools/pyluxcoretools/pyluxcorenetconsole/addnodedialog.py
+src/pyluxcoretools/pyluxcoretools/pyluxcorenetconsole/mainwindow.py
+src/pyluxcoretools/pyluxcoretools/pyluxcorenetnode/mainwindow.py
 
 ###########################
 # XCode

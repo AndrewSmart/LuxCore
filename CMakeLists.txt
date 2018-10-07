@@ -31,7 +31,14 @@ cmake_policy(VERSION 3.0)
 # Remove the following when the version check is at least 2.8.4
 SET(CMAKE_LEGACY_CYGWIN_WIN32 0)
 
-set(supported_build_variants "Debug" "Release")
+set(LuxCoreRender_VERSION_MAJOR "2" CACHE STRING "Major version of LuxCoreRender")
+set(LuxCoreRender_VERSION_MINOR "1alpha4" CACHE STRING "Minor version of LuxCoreRender")
+set(LuxCoreRender_VERSION_PACKAGE "0" CACHE STRING "Package version of LuxCoreRender, incremented for update of package")
+set(LuxCoreRender_VERSION "${LuxCoreRender_VERSION_MAJOR}.${LuxCoreRender_VERSION_MINOR}" CACHE INTERNAL "Version of LuxCoreRender")
+
+# Release will less optimized "-mtune=generic -mno-ssse3" for deployment to other systems, to prevent illegal instruction errors
+# ReleaseNativeOptimized target highly optimized to native (local) CPU see: https://cmake.org/pipermail/cmake/2016-May/063375.html
+set(supported_build_variants "Debug" "Release" "ReleaseNativeOptimized")
 
 # Detect whether we're using a single config or multi config generator and
 # configure it:
@@ -56,9 +63,11 @@ else()
 	# For generators like make, cmake needs to know which variant to use
 	# so let's have a drop-down selector for it in the GUI:
 
-	set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build configuration")
 	set_property(
 			CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS ${supported_build_variants})
+	if (CMAKE_BUILD_TYPE STREQUAL "")
+		set_property(CACHE CMAKE_BUILD_TYPE PROPERTY VALUE "ReleaseNativeOptimized")
+	endif()
 
 	message(STATUS "Using build variant: " ${CMAKE_BUILD_TYPE})
 
@@ -97,12 +106,19 @@ include_directories("${LuxRays_SOURCE_DIR}/deps/eos_portable_archive-v5.1")
 # Find dependencies
 include(Dependencies)
 
+if (NOT PYTHONLIBS_FOUND)
+	MESSAGE(FATAL_ERROR "--> Could not locate required Python files v${PYTHONLIBS_Find_Version} - Please check PYTHON_INCLUDE_DIR and PYTHON_LIBRARY")
+	mark_as_advanced(CLEAR PYTHON_LIBRARY PYTHON_INCLUDE_DIR)
+endif()
+
 if (NOT Boost_FOUND)
-	MESSAGE(FATAL_ERROR "--> Could not locate required Boost files - Please check ${BOOST_SEARCH_PATH}")
+	MESSAGE(FATAL_ERROR "--> Could not locate required Boost files - Please check BOOST_DIR")
+	mark_as_advanced(CLEAR BOOST_DIR)
 endif()
 
 if (NOT OPENIMAGEIO_FOUND)
-	MESSAGE(FATAL_ERROR "--> Could not locate required OpenImageIO files - Please check ${OPENIMAGEIO_SEARCH_PATH}")
+	MESSAGE(FATAL_ERROR "--> Could not locate required OpenImageIO files - Please check OPENIMAGEIO_INCLUDE_DIR and OPENIMAGEIO_LIBRARY")
+	mark_as_advanced(CLEAR OPENIMAGEIO_INCLUDE_DIR OPENIMAGEIO_LIBRARY)
 endif()
 
 if (NOT OPENCL_FOUND AND NOT LUXRAYS_DISABLE_OPENCL)
@@ -116,15 +132,22 @@ if (NOT OPENGL_FOUND AND NOT LUXRAYS_DISABLE_OPENCL)
 endif()
 
 if (NOT EMBREE_FOUND)
-	MESSAGE(FATAL_ERROR "--> Could not locate required Intel Embree files - Please check ${EMBREE_SEARCH_PATH}")
+	MESSAGE(FATAL_ERROR "--> Could not locate required Intel Embree files - Please check EMBREE_INCLUDE_PATH and EMBREE_LIBRARY")
+	mark_as_advanced(CLEAR EMBREE_INCLUDE_PATH EMBREE_LIBRARY)
+endif()
+
+if (NOT OPENEXR_FOUND)
+	MESSAGE(FATAL_ERROR "--> Could not locate required OpenEXR files - Please check activate advanced view on cmake-gui and check OpenEXR variables.")
 endif()
 
 if (NOT TBB_FOUND)
-	MESSAGE(FATAL_ERROR "--> Could not locate required Intel TBB files - Please check ${TBB_SEARCH_PATH}")
+	MESSAGE(FATAL_ERROR "--> Could not locate required Intel TBB files - Please check TBB_INCLUDE_PATH and TBB_LIBRARY")
+	mark_as_advanced(CLEAR TBB_INCLUDE_PATH TBB_LIBRARY)
 endif()
 
 if (NOT BLOSC_FOUND)
-	MESSAGE(FATAL_ERROR "--> Could not locate required C-BLOSC files - Please check ${BLOSC_SEARCH_PATH}")
+	MESSAGE(FATAL_ERROR "--> Could not locate required C-BLOSC files - Please check BLOSC_INCLUDE_PATH and BLOSC_LIBRARY")
+	mark_as_advanced(CLEAR BLOSC_INCLUDE_PATH BLOSC_LIBRARY)
 endif()
 
 ################################################################################
@@ -201,3 +224,7 @@ add_subdirectory(pyunittests)
 ################################################################################
 
 INCLUDE(AssembleBinDirs)
+
+install(DIRECTORY scenes DESTINATION "${CMAKE_INSTALL_DATADIR}/luxcorerender" COMPONENT share)
+install(FILES COPYING.txt DESTINATION ${CMAKE_INSTALL_DOCDIR} RENAME copyright)
+install(FILES COPYING.txt DESTINATION ${CMAKE_INSTALL_DOCDIR} RENAME copyright COMPONENT share)
